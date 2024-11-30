@@ -1,6 +1,8 @@
+// android/app/src/App.tsx
+
 import React from 'react';
 import { StyleSheet, SafeAreaView } from 'react-native';
-import RouteForm from './android/app/src/Components/RouteForm.tsx';
+import RouteForm from './android/app/src/Componentes/RouteComponent';  // Asegúrate de que la ruta esté correcta
 
 const App: React.FC = () => {
   return (
@@ -18,4 +20,5 @@ const styles = StyleSheet.create({
 });
 
 export default App;
+
 

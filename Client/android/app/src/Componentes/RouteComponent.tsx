@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Text, TextInput, Button, StyleSheet, ScrollView, Alert, View, Image } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { Route } from '../Models/RouteModel';
-import { createRoute } from '../Services/RouteService';
+import { createRoute, getVehiclesByUser } from '../Services/RouteService';
 
 const RouteForm: React.FC = () => {
   const [origin, setOrigin] = useState<string>('');
@@ -9,7 +10,27 @@ const RouteForm: React.FC = () => {
   const [departureTime, setDepartureTime] = useState<string>('');
   const [availableSeats, setAvailableSeats] = useState<string>('');
   const [price, setPrice] = useState<string>('');
-  const [vehicleId, setVehicleId] = useState<string>('674e686b775d73704048e5bc');
+  const [vehicleId, setVehicleId] = useState<string>('');
+  const [vehicles, setVehicles] = useState<any[]>([]); // Array de vehículos
+
+  useEffect(() => {
+    // Supón que el userId está disponible
+    const userId = '67351210581a6a4f04f5ce0e'; // Reemplázalo con el id del usuario real
+    const fetchVehicles = async () => {
+      try {
+        const vehiclesData = await getVehiclesByUser(userId);
+        setVehicles(vehiclesData);
+        if (vehiclesData.length > 0) {
+          setVehicleId(vehiclesData[0].vehicle_id); // Seleccionar el primer vehículo por defecto
+        }
+      } catch (error) {
+        console.error('Error al obtener los vehículos:', error);
+        Alert.alert('Error', 'No se pudieron cargar los vehículos.');
+      }
+    };
+
+    fetchVehicles();
+  }, []);
 
   // Validar si la hora tiene el formato hh:mm
   const isValidTime = (time: string) => {
@@ -117,12 +138,22 @@ const RouteForm: React.FC = () => {
         onChangeText={setPrice}
         keyboardType="numeric"
       />
-      <TextInput
-        placeholder="ID del Vehículo"
+      
+      <Text style={styles.inputLabel}>Seleccionar Vehículo:</Text>
+      <Picker
+        selectedValue={vehicleId}
         style={styles.input}
-        value={vehicleId}
-        onChangeText={setVehicleId}
-      />
+        onValueChange={(itemValue) => setVehicleId(itemValue)}
+      >
+        {vehicles.map((vehicle) => (
+          <Picker.Item 
+            key={vehicle.vehicle_id} 
+            label={`${vehicle.model} ${vehicle.color} (${vehicle.license_plate})`} 
+            value={vehicle.vehicle_id} 
+          />
+        ))}
+      </Picker>
+
       <View style={styles.buttonContainer}>
         <Button title="Publicar Ruta" color="#1976d2" onPress={handleSubmit} />
       </View>
@@ -155,6 +186,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#1976d2',
   },
   buttonContainer: {
     marginTop: 16,

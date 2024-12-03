@@ -6,11 +6,7 @@ const BASE_URL = 'http://10.0.2.2:3000';
 
 export const createRoute = async (route: Route) => {
   try {
-    console.log(route);
     const response = await axios.post(`${BASE_URL}/routes`, route);
-    console.log('Respuesta del servidor:', response.data); 
-    const response2 = await getVehiclesByUser('67351210581a6a4f04f5ce0e');
-    console.log('Respuesta del servidor 2:',response2);
     return response.data;
   } catch (error) {
     throw new Error('Error al crear la ruta');
@@ -20,11 +16,34 @@ export const createRoute = async (route: Route) => {
 export const getVehiclesByUser = async (userId: string): Promise<Vehicle[]> => {
   try {
     const response = await axios.get(`${BASE_URL}/vehicles/users/${userId}`);
-    console.log('Respuesta del servidor:', response.data);
     return response.data; // Retorna los vehículos
   } catch (error) {
     console.error('Error al obtener los vehículos:', error);
     throw new Error('Error al obtener los vehículos');
+  }
+};
+
+export const getRoutes = async (filter: { origin?: string, destination?: string }) => {
+  try {
+    const where: { [key: string]: any } = {};
+    if (filter.origin) {
+      where['origin'] = filter.origin;
+    }
+
+    if (filter.destination) {
+      where['destination'] = filter.destination;
+    }
+
+    const response = await axios.get(`${BASE_URL}/routes`, {
+      params: {
+        where: JSON.stringify(where),
+        limit: 100, 
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al obtener las rutas');
   }
 };
 

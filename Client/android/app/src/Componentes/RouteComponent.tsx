@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Text, TextInput, Button, StyleSheet, ScrollView, Alert, View, Image } from 'react-native';
+import { Text, TextInput, Button, StyleSheet, ScrollView, Alert, View, Image, Switch } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { Route } from '../Models/RouteModel';
 import { createRoute, getVehiclesByUser } from '../Services/RouteService';
@@ -12,6 +12,7 @@ const RouteForm: React.FC = () => {
   const [price, setPrice] = useState<string>('');
   const [vehicleId, setVehicleId] = useState<string>('');
   const [vehicles, setVehicles] = useState<any[]>([]); // Array de vehículos
+  const [isGoing, setIsGoing] = useState<boolean>(false);
 
   useEffect(() => {
     // Supón que el userId está disponible
@@ -37,6 +38,16 @@ const RouteForm: React.FC = () => {
     const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5]?[0-9])$/;
     return timeRegex.test(time);
   };
+  
+  useEffect(() => {
+    if (isGoing) {
+      setOrigin('Sede central U de Caldas');
+      setDestination('');
+    } else {
+      setDestination('Sede central U de Caldas');
+      setOrigin('');
+    }
+  }, [isGoing]);
 
   // Función para manejar el envío del formulario
   const handleSubmit = async () => {
@@ -153,6 +164,13 @@ const RouteForm: React.FC = () => {
           />
         ))}
       </Picker>
+      <View style={styles.switchContainer}>
+        <Text>{isGoing ? 'Vas hacia' : 'Vas desde'} la Sede central U de Caldas</Text>
+        <Switch
+          value={isGoing}
+          onValueChange={setIsGoing}
+        />
+      </View>
 
       <View style={styles.buttonContainer}>
         <Button title="Publicar Ruta" color="#1976d2" onPress={handleSubmit} />
@@ -195,6 +213,11 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: 16,
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
   },
 });
 

@@ -11,7 +11,9 @@
   },
   "dependencies": {
     "@react-native-community/datetimepicker": "^8.2.0",
+    "@react-native-picker/picker": "^2.10.1",
     "axios": "^1.7.8",
+    "picker": "^0.1.4",
     "react": "18.3.1",
     "react-native": "0.76.0"
   },

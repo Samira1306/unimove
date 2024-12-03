@@ -124,7 +124,7 @@ export class Route extends Entity {
     const currentTime = new Date();
     const departureTime = new Date(this.departure_time);
     // Verificar que la hora de salida sea al menos una hora mayor que la hora actual
-    currentTime.setHours(currentTime.getHours() + 6);
+    currentTime.setHours(currentTime.getHours()- 6);
     if (departureTime <= currentTime) {
       throw new HttpErrors.UnprocessableEntity(
         'La hora de salida debe ser al menos una hora mayor que la hora actual.',

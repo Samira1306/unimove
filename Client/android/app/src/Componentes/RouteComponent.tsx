@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Text, TextInput, Button, StyleSheet, ScrollView, Alert, View, Image } from 'react-native';
-import { Route } from '../Models/RouteModel'; // Importa el tipo de ruta
-import { createRoute } from '../Services/RouteService'; // Importa el servicio de creación de ruta
+import { Route } from '../Models/RouteModel';
+import { createRoute } from '../Services/RouteService';
 
 const RouteForm: React.FC = () => {
   const [origin, setOrigin] = useState<string>('');
@@ -9,7 +9,7 @@ const RouteForm: React.FC = () => {
   const [departureTime, setDepartureTime] = useState<string>('');
   const [availableSeats, setAvailableSeats] = useState<string>('');
   const [price, setPrice] = useState<string>('');
-  const [vehicleId, setVehicleId] = useState<string>('67351766e6361f3a5cdf87d1'); // ID de vehículo de ejemplo
+  const [vehicleId, setVehicleId] = useState<string>('674e686b775d73704048e5bc');
 
   // Validar si la hora tiene el formato hh:mm
   const isValidTime = (time: string) => {
@@ -47,14 +47,14 @@ const RouteForm: React.FC = () => {
     // Crear un objeto Date con la fecha actual y la hora seleccionada
     const currentDate = new Date();
     const [hours, minutes] = departureTime.split(':').map((part) => parseInt(part, 10));
-    
+
     // Validamos si las horas y minutos son correctos antes de setearlos
     if (isNaN(hours) || isNaN(minutes)) {
       Alert.alert('Error', 'Hora o minutos no válidos.');
       return;
     }
-    
-    currentDate.setHours(hours, minutes, 0, 0); // Establecemos la hora, minuto y reseteamos los segundos
+
+    currentDate.setHours(hours, minutes, 0, 0);
 
     // Crear el objeto de la ruta utilizando el tipo definido
     const routeData: Route = {
@@ -70,7 +70,6 @@ const RouteForm: React.FC = () => {
       await createRoute(routeData);
       Alert.alert('Ruta Publicada', 'La ruta se ha publicado con éxito.');
     } catch (error: any) {
-      console.log(error); // Ayuda en la depuración
       Alert.alert('Error', error.message || 'Hubo un problema con la publicación de la ruta.');
     }
   };

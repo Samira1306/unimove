@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Text, TextInput, Button, StyleSheet, ScrollView, Alert, View, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Text, TextInput, Button, StyleSheet, ScrollView, Alert, View, Image, Switch } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { Route } from '../Models/RouteModel';
-import { createRoute } from '../Services/RouteService';
+import { createRoute, getVehiclesByUser } from '../Services/RouteService';
 
 const RouteForm: React.FC = () => {
   const [origin, setOrigin] = useState<string>('');
@@ -9,13 +10,44 @@ const RouteForm: React.FC = () => {
   const [departureTime, setDepartureTime] = useState<string>('');
   const [availableSeats, setAvailableSeats] = useState<string>('');
   const [price, setPrice] = useState<string>('');
-  const [vehicleId, setVehicleId] = useState<string>('674e686b775d73704048e5bc');
+  const [vehicleId, setVehicleId] = useState<string>('');
+  const [vehicles, setVehicles] = useState<any[]>([]); // Array de vehículos
+  const [isGoing, setIsGoing] = useState<boolean>(false);
+
+  useEffect(() => {
+    // Supón que el userId está disponible
+    const userId = '67351210581a6a4f04f5ce0e'; // Reemplázalo con el id del usuario real
+    const fetchVehicles = async () => {
+      try {
+        const vehiclesData = await getVehiclesByUser(userId);
+        setVehicles(vehiclesData);
+        if (vehiclesData.length > 0) {
+          setVehicleId(vehiclesData[0].vehicle_id); // Seleccionar el primer vehículo por defecto
+        }
+      } catch (error) {
+        console.error('Error al obtener los vehículos:', error);
+        Alert.alert('Error', 'No se pudieron cargar los vehículos.');
+      }
+    };
+
+    fetchVehicles();
+  }, []);
 
   // Validar si la hora tiene el formato hh:mm
   const isValidTime = (time: string) => {
     const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5]?[0-9])$/;
     return timeRegex.test(time);
   };
+  
+  useEffect(() => {
+    if (isGoing) {
+      setOrigin('Sede central U de Caldas');
+      setDestination('');
+    } else {
+      setDestination('Sede central U de Caldas');
+      setOrigin('');
+    }
+  }, [isGoing]);
 
   // Función para manejar el envío del formulario
   const handleSubmit = async () => {
@@ -29,6 +61,7 @@ const RouteForm: React.FC = () => {
       Alert.alert('Error', 'La hora debe tener el formato hh:mm en 24 horas.');
       return;
     }
+    
 
     // Validar campos numéricos
     const numAvailableSeats = parseInt(availableSeats, 10);
@@ -54,7 +87,17 @@ const RouteForm: React.FC = () => {
       return;
     }
 
-    currentDate.setHours(hours, minutes, 0, 0);
+    const departureDate = new Date(currentDate);
+    departureDate.setHours(hours);
+    departureDate.setMinutes(minutes);
+    departureDate.setSeconds(0);
+    departureDate.setMilliseconds(0);
+    const oneHourLater = new Date(currentDate);
+    oneHourLater.setHours(currentDate.getHours() - 4);
+    if (departureDate <= oneHourLater) {
+      Alert.alert('Error', 'La hora de salida debe ser al menos una hora mayor que la hora actual.');
+      return;
+    }
 
     // Crear el objeto de la ruta utilizando el tipo definido
     const routeData: Route = {
@@ -117,12 +160,29 @@ const RouteForm: React.FC = () => {
         onChangeText={setPrice}
         keyboardType="numeric"
       />
-      <TextInput
-        placeholder="ID del Vehículo"
+      
+      <Text style={styles.inputLabel}>Seleccionar Vehículo:</Text>
+      <Picker
+        selectedValue={vehicleId}
         style={styles.input}
-        value={vehicleId}
-        onChangeText={setVehicleId}
-      />
+        onValueChange={(itemValue) => setVehicleId(itemValue)}
+      >
+        {vehicles.map((vehicle) => (
+          <Picker.Item 
+            key={vehicle.vehicle_id} 
+            label={`${vehicle.model} ${vehicle.color} (${vehicle.license_plate})`} 
+            value={vehicle.vehicle_id} 
+          />
+        ))}
+      </Picker>
+      <View style={styles.switchContainer}>
+        <Text>{isGoing ? 'Vas hacia' : 'Vas desde'} la Sede central U de Caldas</Text>
+        <Switch
+          value={isGoing}
+          onValueChange={setIsGoing}
+        />
+      </View>
+
       <View style={styles.buttonContainer}>
         <Button title="Publicar Ruta" color="#1976d2" onPress={handleSubmit} />
       </View>
@@ -156,8 +216,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginBottom: 16,
   },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#1976d2',
+  },
   buttonContainer: {
     marginTop: 16,
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
   },
 });
 

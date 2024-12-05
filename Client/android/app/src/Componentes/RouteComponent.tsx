@@ -61,6 +61,7 @@ const RouteForm: React.FC = () => {
       Alert.alert('Error', 'La hora debe tener el formato hh:mm en 24 horas.');
       return;
     }
+    
 
     // Validar campos numéricos
     const numAvailableSeats = parseInt(availableSeats, 10);
@@ -86,7 +87,17 @@ const RouteForm: React.FC = () => {
       return;
     }
 
-    currentDate.setHours(hours, minutes, 0, 0);
+    const departureDate = new Date(currentDate);
+    departureDate.setHours(hours);
+    departureDate.setMinutes(minutes);
+    departureDate.setSeconds(0);
+    departureDate.setMilliseconds(0);
+    const oneHourLater = new Date(currentDate);
+    oneHourLater.setHours(currentDate.getHours() - 4);
+    if (departureDate <= oneHourLater) {
+      Alert.alert('Error', 'La hora de salida debe ser al menos una hora mayor que la hora actual.');
+      return;
+    }
 
     // Crear el objeto de la ruta utilizando el tipo definido
     const routeData: Route = {

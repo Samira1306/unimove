@@ -121,15 +121,7 @@ export class Route extends Entity {
   }
 
   private validateTime() {
-    const currentTime = new Date();
     const departureTime = new Date(this.departure_time);
-    // Verificar que la hora de salida sea al menos una hora mayor que la hora actual
-    currentTime.setHours(currentTime.getHours()- 6);
-    if (departureTime <= currentTime) {
-      throw new HttpErrors.UnprocessableEntity(
-        'La hora de salida debe ser al menos una hora mayor que la hora actual.',
-      );
-    }
      // Validar que la hora de salida esté entre las 4 a.m. y las 11 p.m.
      const departureHours = departureTime.getHours() + 5;
      if (departureHours < 4 || departureHours >= 23) {

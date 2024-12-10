@@ -40,7 +40,7 @@ export class RouteControllerController {
         'application/json': {
           schema: getModelSchemaRef(Route, {
             title: 'NewRoute',
-            
+
           }),
         },
       },
@@ -87,6 +87,34 @@ export class RouteControllerController {
     @param.filter(Route) filter?: Filter<Route>,
   ): Promise<Route[]> {
     return this.routeRepository.find(filter);
+  }
+
+  @get('/routes/filter')
+  @response(200, {
+    description: 'Filter routes by origin and destination',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'array',
+          items: getModelSchemaRef(Route, {includeRelations: true}),
+        },
+      },
+    },
+  })
+  async findFilteredRoutes(
+    @param.query.string('origin') origin?: string,
+    @param.query.string('destination') destination?: string,
+  ): Promise<Route[]> {
+    const where = {};
+
+    if (origin) {
+      Object.assign(where, {origin});
+    }
+    if (destination) {
+      Object.assign(where, {destination});
+    }
+
+    return this.routeRepository.find({where});
   }
 
   @patch('/routes')
@@ -159,5 +187,13 @@ export class RouteControllerController {
   })
   async deleteById(@param.path.string('id') id: string): Promise<void> {
     await this.routeRepository.deleteById(id);
+  }
+
+  @del('/routes')
+  @response(204, {
+    description: 'All Routes DELETE success',
+  })
+  async deleteAll(): Promise<void> {
+    await this.routeRepository.deleteAll();
   }
 }

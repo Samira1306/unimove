@@ -23,21 +23,12 @@ export const getVehiclesByUser = async (userId: string): Promise<Vehicle[]> => {
   }
 };
 
-export const getRoutes = async (filter: { origin?: string, destination?: string }) => {
+export const getRoutes = async (filter: { origin?: string; destination?: string }) => {
   try {
-    const where: { [key: string]: any } = {};
-    if (filter.origin) {
-      where['origin'] = filter.origin;
-    }
-
-    if (filter.destination) {
-      where['destination'] = filter.destination;
-    }
-
-    const response = await axios.get(`${BASE_URL}/routes`, {
+    const response = await axios.get(`${BASE_URL}/routes/filter`, {
       params: {
-        where: JSON.stringify(where),
-        limit: 100, 
+        origin: filter.origin || '',
+        destination: filter.destination || '',
       },
     });
 

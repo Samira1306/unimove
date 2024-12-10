@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,60 +6,93 @@ import {
   FlatList,
   StyleSheet,
   Button,
+  ActivityIndicator,
 } from 'react-native';
+import { getRoutes } from '../Services/RouteService'; // Ajusta la ruta según tu proyecto
+import { Route } from '../Models/RouteModel'; // Importa la interfaz desde la carpeta de modelos
 
-// Definición de tipos para las rutas
-interface Route {
-  origin: string;
-  destination: string;
-  departure_time: string;
-  available_seats: number;
-  price: number;
-  vehicle_id: string;
-}
+const RouteList: React.FC = () => {
+  const [originFilter, setOriginFilter] = useState<string>(''); // Filtro por origen
+  const [destinationFilter, setDestinationFilter] = useState<string>(''); // Filtro por destino
+  const [routes, setRoutes] = useState<Route[]>([]); // Estado para las rutas obtenidas
+  const [loading, setLoading] = useState<boolean>(false); // Estado para la carga
+  const [error, setError] = useState<string | null>(null); // Estado para errores
 
-// Props del componente
-interface RouteListProps {
-  routes: Route[];
-}
+  // Función para cargar las rutas desde el servicio
+  const loadRoutes = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getRoutes({
+        origin: originFilter,
+        destination: destinationFilter,
+      });
+      setRoutes(data); // Asume que la API devuelve un array de rutas
+    } catch (err) {
+      setError('Error al cargar las rutas.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-const RouteList: React.FC<RouteListProps> = ({ routes }) => {
-  const [filter, setFilter] = useState<string>(''); // Estado para el filtro
+  // Cargar rutas iniciales
+  useEffect(() => {
+    loadRoutes();
+  }, []);
 
-  // Filtrar las rutas basándose en el destino
-  const filteredRoutes = routes.filter((route) =>
-    route.destination.toLowerCase().includes(filter.toLowerCase())
-  );
+  // Actualizar rutas cuando cambien los filtros
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      loadRoutes();
+    }, 500); // Esperar 500ms antes de realizar la búsqueda
+    return () => clearTimeout(delayDebounce); // Limpiar el timeout
+  }, [originFilter, destinationFilter]);
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Listado de Rutas</Text>
 
-      {/* Input para filtrar */}
+      {/* Input para filtrar por origen */}
+      <TextInput
+        style={styles.input}
+        placeholder="Filtrar por origen"
+        value={originFilter}
+        onChangeText={(text) => setOriginFilter(text)}
+      />
+
+      {/* Input para filtrar por destino */}
       <TextInput
         style={styles.input}
         placeholder="Filtrar por destino"
-        value={filter}
-        onChangeText={(text) => setFilter(text)} // React Native usa onChangeText directamente
+        value={destinationFilter}
+        onChangeText={(text) => setDestinationFilter(text)}
       />
 
-      {/* Lista de rutas filtradas */}
+      {loading && <ActivityIndicator size="large" color="#0000ff" />}
+
+      {error && <Text style={styles.errorText}>{error}</Text>}
+
+      {/* Lista de rutas */}
       <FlatList
-        data={filteredRoutes}
+        data={routes}
+        keyExtractor={(item, index) => index.toString()}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>No se encontraron rutas.</Text>
+          !loading && (
+            <Text style={styles.emptyText}>No se encontraron rutas.</Text>
+          )
         }
         renderItem={({ item }) => (
           <View style={styles.routeItem}>
             <Text>Origen: {item.origin}</Text>
             <Text>Destino: {item.destination}</Text>
-            <Text>Hora de Salida: {new Date(item.departure_time).toLocaleString()}</Text>
+            <Text>
+              Hora de Salida: {new Date(item.departure_time).toLocaleString()}
+            </Text>
             <Text>Asientos Disponibles: {item.available_seats}</Text>
             <Text>Precio: ${item.price}</Text>
             <Text>ID del Vehículo: {item.vehicle_id}</Text>
             <View style={styles.buttons}>
-              <Button title="Editar" onPress={() => {}} />
-              <Button title="Eliminar" onPress={() => {}} />
+              <Button title="Reservar" onPress={() => {}} />
             </View>
           </View>
         )}
@@ -96,14 +129,17 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   buttons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     marginTop: 10,
   },
   emptyText: {
     textAlign: 'center',
     marginTop: 20,
     color: '#666',
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginBottom: 20,
   },
 });
 

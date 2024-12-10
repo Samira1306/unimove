@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { StyleSheet, SafeAreaView } from 'react-native';
-import RouteForm from './android/app/src/Componentes/RouteComponent';  // Asegúrate de que la ruta esté correcta
+import RouteForm from './android/app/src/Componentes/RouteListComponent';  // Asegúrate de que la ruta esté correcta
 
 const App: React.FC = () => {
   return (

@@ -90,32 +90,32 @@ export class RouteControllerController {
   }
 
   @get('/routes/filter')
-  @response(200, {
-    description: 'Filter routes by origin and destination',
-    content: {
-      'application/json': {
-        schema: {
-          type: 'array',
-          items: getModelSchemaRef(Route, {includeRelations: true}),
-        },
+@response(200, {
+  description: 'Filter routes by origin and destination using regex',
+  content: {
+    'application/json': {
+      schema: {
+        type: 'array',
+        items: getModelSchemaRef(Route, {includeRelations: true}),
       },
     },
-  })
-  async findFilteredRoutes(
-    @param.query.string('origin') origin?: string,
-    @param.query.string('destination') destination?: string,
-  ): Promise<Route[]> {
-    const where = {};
+  },
+})
+async findFilteredRoutes(
+  @param.query.string('origin') origin?: string,
+  @param.query.string('destination') destination?: string,
+): Promise<Route[]> {
+  const where: any = {};
 
-    if (origin) {
-      Object.assign(where, {origin});
-    }
-    if (destination) {
-      Object.assign(where, {destination});
-    }
-
-    return this.routeRepository.find({where});
+  if (origin) {
+    Object.assign(where, {origin: {regexp: new RegExp(origin, 'i')}});
   }
+  if (destination) {
+    Object.assign(where, {destination: {regexp: new RegExp(destination, 'i')}});
+  }
+
+  return this.routeRepository.find({where});
+}
 
   @patch('/routes')
   @response(200, {

@@ -8,26 +8,41 @@ import {
   Button,
   ActivityIndicator,
 } from 'react-native';
-import { getRoutes } from '../Services/RouteService'; // Ajusta la ruta según tu proyecto
-import { Route } from '../Models/RouteModel'; // Importa la interfaz desde la carpeta de modelos
+import { getRoutes, getVehicleById } from '../Services/RouteService';
+import { Route } from '../Models/RouteModel';
+import { Vehicle } from '../Models/VehicleModel';
 
 const RouteList: React.FC = () => {
   const [originFilter, setOriginFilter] = useState<string>(''); // Filtro por origen
   const [destinationFilter, setDestinationFilter] = useState<string>(''); // Filtro por destino
-  const [routes, setRoutes] = useState<Route[]>([]); // Estado para las rutas obtenidas
-  const [loading, setLoading] = useState<boolean>(false); // Estado para la carga
-  const [error, setError] = useState<string | null>(null); // Estado para errores
+  const [routes, setRoutes] = useState<(Route & { vehicleDetails?: string })[]>([]); // Rutas con detalles de vehículos
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Función para cargar las rutas desde el servicio
   const loadRoutes = async () => {
     setLoading(true);
     setError(null);
+
     try {
-      const data = await getRoutes({
-        origin: originFilter,
-        destination: destinationFilter,
-      });
-      setRoutes(data); // Asume que la API devuelve un array de rutas
+      const data = await getRoutes({ origin: originFilter, destination: destinationFilter });
+
+      // Cargar detalles de vehículos
+      const routesWithVehicles = await Promise.all(
+        data.map(async (route) => {
+          try {
+            const vehicle = await getVehicleById(route.vehicle_id);
+            return {
+              ...route,
+              vehicleDetails: `${vehicle.model}- ${vehicle.color}- ${vehicle.license_plate} (${vehicle.year})`,
+            };
+          } catch (vehicleError) {
+            console.error('Error al obtener el vehículo:', vehicleError);
+            return { ...route, vehicleDetails: 'Información no disponible' };
+          }
+        })
+      );
+
+      setRoutes(routesWithVehicles);
     } catch (err) {
       setError('Error al cargar las rutas.');
     } finally {
@@ -35,17 +50,15 @@ const RouteList: React.FC = () => {
     }
   };
 
-  // Cargar rutas iniciales
   useEffect(() => {
     loadRoutes();
   }, []);
 
-  // Actualizar rutas cuando cambien los filtros
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       loadRoutes();
-    }, 500); // Esperar 500ms antes de realizar la búsqueda
-    return () => clearTimeout(delayDebounce); // Limpiar el timeout
+    }, 500);
+    return () => clearTimeout(delayDebounce);
   }, [originFilter, destinationFilter]);
 
   return (
@@ -77,20 +90,16 @@ const RouteList: React.FC = () => {
         data={routes}
         keyExtractor={(item, index) => index.toString()}
         ListEmptyComponent={
-          !loading && (
-            <Text style={styles.emptyText}>No se encontraron rutas.</Text>
-          )
+          !loading && <Text style={styles.emptyText}>No se encontraron rutas.</Text>
         }
         renderItem={({ item }) => (
           <View style={styles.routeItem}>
             <Text>Origen: {item.origin}</Text>
             <Text>Destino: {item.destination}</Text>
-            <Text>
-              Hora de Salida: {new Date(item.departure_time).toLocaleString()}
-            </Text>
+            <Text>Hora de Salida: {new Date(item.departure_time).toLocaleString()}</Text>
             <Text>Asientos Disponibles: {item.available_seats}</Text>
             <Text>Precio: ${item.price}</Text>
-            <Text>ID del Vehículo: {item.vehicle_id}</Text>
+            <Text>Vehículo: {item.vehicleDetails}</Text>
             <View style={styles.buttons}>
               <Button title="Reservar" onPress={() => {}} />
             </View>
@@ -101,7 +110,7 @@ const RouteList: React.FC = () => {
   );
 };
 
-// Estilos para la pantalla
+// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,
